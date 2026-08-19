@@ -1,5 +1,4 @@
 import Foundation
-import FoundationXML
 
 final class RSSFeedParser: NSObject, XMLParserDelegate {
     private let source: FeedSource
