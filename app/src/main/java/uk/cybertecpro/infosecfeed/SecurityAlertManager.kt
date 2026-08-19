@@ -25,6 +25,7 @@ object SecurityAlertManager {
     const val CHANNEL_ID = "critical_security_alerts"
     private const val PREFS = "security_alerts"
     private const val ENABLED = "enabled"
+    private const val MODE = "mode"
     private const val SEEN_IDS = "seen_ids"
     private const val UNIQUE_PERIODIC_REFRESH = "infosec-alert-periodic-refresh"
     private const val CONFIRMATION_ID = 7100
@@ -48,8 +49,15 @@ object SecurityAlertManager {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
-    fun isEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(ENABLED, false)
+    fun mode(context: Context): AlertMode {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val stored = prefs.getString(MODE, null)
+        return stored?.let { runCatching { AlertMode.valueOf(it) }.getOrNull() }
+            // v1.2 used a Boolean. Migrate enabled users to the quieter KEV-only default.
+            ?: if (prefs.getBoolean(ENABLED, false)) AlertMode.KEV_ONLY else AlertMode.OFF
+    }
+
+    fun isEnabled(context: Context): Boolean = mode(context) != AlertMode.OFF
 
     fun canPost(context: Context): Boolean {
         val permissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -58,13 +66,16 @@ object SecurityAlertManager {
         return permissionGranted && NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
-    fun enable(context: Context, currentItems: List<FeedItem>) {
+    fun enable(context: Context, currentItems: List<FeedItem>, mode: AlertMode) {
+        require(mode != AlertMode.OFF)
         ensureChannel(context)
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val existing = prefs.getStringSet(SEEN_IDS, emptySet()).orEmpty().toMutableSet()
-        existing += AlertPolicy.alertIds(currentItems)
+        // Changing threshold must not surface older critical items as if they were new.
+        existing += AlertPolicy.alertIds(currentItems, mode)
         prefs.edit()
             .putBoolean(ENABLED, true)
+            .putString(MODE, mode.name)
             .putStringSet(SEEN_IDS, existing.takeLastBounded())
             .apply()
         schedule(context)
@@ -75,6 +86,7 @@ object SecurityAlertManager {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(ENABLED, false)
+            .putString(MODE, AlertMode.OFF.name)
             .apply()
         WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_PERIODIC_REFRESH)
     }
@@ -83,9 +95,10 @@ object SecurityAlertManager {
         if (!isEnabled(context) || !canPost(context)) return
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val seen = prefs.getStringSet(SEEN_IDS, emptySet()).orEmpty().toSet()
-        val alerts = AlertPolicy.newAlerts(items, seen)
+        val mode = mode(context)
+        val alerts = AlertPolicy.newAlerts(items, seen, mode)
         if (alerts.isEmpty()) return
-        val updatedSeen = (seen + AlertPolicy.alertIds(items)).toMutableSet().takeLastBounded()
+        val updatedSeen = (seen + AlertPolicy.alertIds(items, mode)).toMutableSet().takeLastBounded()
         prefs.edit().putStringSet(SEEN_IDS, updatedSeen).apply()
         postAlerts(context, alerts)
     }
@@ -117,7 +130,15 @@ object SecurityAlertManager {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_alert)
             .setContentTitle(context.getString(R.string.alert_confirmation_title))
-            .setContentText(context.getString(R.string.alert_confirmation_body))
+            .setContentText(
+                context.getString(
+                    if (mode(context) == AlertMode.KEV_ONLY) {
+                        R.string.alert_confirmation_body_kev
+                    } else {
+                        R.string.alert_confirmation_body_critical
+                    },
+                ),
+            )
             .setContentIntent(openApp)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

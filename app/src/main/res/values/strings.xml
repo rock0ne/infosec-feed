@@ -7,13 +7,21 @@
     <string name="empty">No items yet. Open the app and pull to refresh.</string>
     <string name="add_widget">+ Widget</string>
     <string name="alerts_off">Alerts: off</string>
-    <string name="alerts_on">Alerts: on</string>
+    <string name="alerts_kev">Alerts: KEV</string>
+    <string name="alerts_all_critical">Alerts: critical</string>
     <string name="alerts_blocked">Alerts: blocked</string>
     <string name="alerts_enabled_message">Critical security alerts enabled</string>
     <string name="alerts_disabled_message">Security alerts disabled</string>
     <string name="alert_channel_name">Critical security alerts</string>
     <string name="alert_channel_description">New CISA-exploited and critical vulnerabilities</string>
     <string name="alert_confirmation_title">InfoSec Feed alerts are ready</string>
-    <string name="alert_confirmation_body">You will be notified about newly observed exploited and critical vulnerabilities.</string>
+    <string name="alert_confirmation_body_kev">You will be notified about newly observed CISA-exploited vulnerabilities.</string>
+    <string name="alert_confirmation_body_critical">You will be notified about newly observed exploited and critical vulnerabilities.</string>
+    <string name="alert_options_title">Security alert threshold</string>
+    <string name="alert_option_off">Off</string>
+    <string name="alert_option_kev">CISA KEV only (recommended)</string>
+    <string name="alert_option_critical">CISA KEV + critical CVEs</string>
+    <string name="search_hint">Search CVE, topic or source</string>
+    <string name="no_search_results">No matching feed items.</string>
     <string name="source_age">\u00b7  %1$s</string>
 </resources>
