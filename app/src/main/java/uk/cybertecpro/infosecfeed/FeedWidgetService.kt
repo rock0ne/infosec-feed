@@ -29,13 +29,32 @@ private class FeedRemoteViewsFactory(
         val item = items[position]
         val views = RemoteViews(context.packageName, R.layout.widget_item)
         views.setTextViewText(R.id.widget_item_title, item.title)
-        views.setTextViewText(
-            R.id.widget_item_meta,
-            buildString {
-                item.severity?.let { append(it).append("  ·  ") }
-                append(item.source).append("  ·  ").append(Format.age(item.published))
-            }
+        views.setTextViewText(R.id.widget_item_summary, item.summary)
+        views.setViewVisibility(
+            R.id.widget_item_summary,
+            if (item.summary.isBlank()) View.GONE else View.VISIBLE,
         )
+        views.setTextViewText(R.id.widget_item_source, item.source)
+        views.setTextViewText(R.id.widget_item_age, "·  ${Format.age(item.published)}")
+        val avatarSize = (18 * context.resources.displayMetrics.density).toInt()
+        views.setImageViewBitmap(R.id.widget_source_avatar, SourceAvatar.of(item.source, avatarSize))
+
+        val severity = item.severity
+        if (severity == null) {
+            views.setViewVisibility(R.id.widget_item_badge, View.GONE)
+        } else {
+            views.setTextViewText(R.id.widget_item_badge, severity)
+            views.setInt(
+                R.id.widget_item_badge,
+                "setBackgroundResource",
+                when (severity) {
+                    "EXPLOITED" -> R.drawable.badge_exploited
+                    "CRITICAL" -> R.drawable.badge_critical
+                    else -> R.drawable.badge_high
+                },
+            )
+            views.setViewVisibility(R.id.widget_item_badge, View.VISIBLE)
+        }
         val thumbnail = item.imageUrl
             ?.let { ImageLoader.cachedOrDisk(context.cacheDir, it) }
             ?.let(WidgetThumbnail::from)

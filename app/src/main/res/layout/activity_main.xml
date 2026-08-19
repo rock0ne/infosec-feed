@@ -15,6 +15,10 @@
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="@string/add_widget" android:textColor="@color/accent"
             android:textSize="13sp" android:padding="8dp" />
+        <TextView android:id="@+id/alerts"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/alerts_off" android:textColor="@color/accent"
+            android:textSize="13sp" android:padding="8dp" />
     </LinearLayout>
 
     <TextView android:id="@+id/status"

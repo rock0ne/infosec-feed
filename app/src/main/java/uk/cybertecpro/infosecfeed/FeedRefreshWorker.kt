@@ -14,6 +14,7 @@ class FeedRefreshWorker(context: Context, params: WorkerParameters) :
             Result.retry()
         } else {
             FeedWidgetProvider.refreshAll(applicationContext)
+            SecurityAlertManager.onFeedUpdated(applicationContext, items)
             Result.success()
         }
     }
