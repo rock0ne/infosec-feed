@@ -14,7 +14,8 @@ general headlines.
 - CISA Known Exploited Vulnerabilities, recent NVD CVEs and security repositories
 - Up to 500 deduplicated items cached for offline reading
 - Discover-style image and text cards with category filters and search on iOS
-- Full-page, scrollable Android home-screen widget
+- Discover-style, scrollable Android home-screen widget with a matching picker preview
+- Opt-in Android alerts for newly observed exploited and critical vulnerabilities
 - Bounded CISA KEV WidgetKit snapshot on iOS
 - No account, advertising SDK, analytics SDK or behavioural ranking
 - HTTPS-only application traffic and bounded image downloads
@@ -33,13 +34,13 @@ snapshot.
 
 ## Install the Android release
 
-1. Download `InfoSec-Feed-1.1.0-release.apk` from the GitHub release.
+1. Download `InfoSec-Feed-1.2.0-release.apk` from the GitHub release.
 2. Enable **Developer options → USB debugging** on the phone.
 3. Connect the phone, accept its authorization prompt, then run:
 
 ```powershell
 adb devices
-adb install -r "InfoSec-Feed-1.1.0-release.apk"
+adb install -r "InfoSec-Feed-1.2.0-release.apk"
 ```
 
 The `-r` flag upgrades an existing installation without clearing its cached feed.
@@ -53,6 +54,18 @@ The `-r` flag upgrades an existing installation without clearing its cached feed
 On Samsung devices, Discover can be disabled from the leftmost home-screen page.
 The app cannot occupy Samsung's privileged minus-one provider slot; using a
 normal full-page widget avoids rooting, Knox changes and proprietary permissions.
+
+### Enable Android security alerts
+
+Open the app and tap **Alerts: off**, then allow notifications when Android asks.
+The app creates a dedicated **Critical security alerts** channel and checks in the
+background every 30 minutes while alerts are enabled. Enabling alerts records the
+current cache as already seen, so it does not dump historical CVEs into the
+notification shade. Only newly observed `EXPLOITED` and `CRITICAL` entries qualify.
+
+Tap **Alerts: blocked** to open Android's notification settings if permission was
+later disabled. Android controls exact background timing and may defer checks for
+battery optimisation.
 
 ## Build Android
 
@@ -98,6 +111,7 @@ Sources can fail independently without breaking the feed. Edit Android's
 - App-authored network requests use HTTPS; Android blocks cleartext application traffic.
 - Feed images are size-bounded, downsampled and cached with a fixed disk budget.
 - Android manual widget refresh uses a non-exported receiver.
+- Android notifications are off by default and require runtime permission.
 - No personal data is collected by this project.
 - Publishers receive the device IP address because feeds are fetched directly.
 

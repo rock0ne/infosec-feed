@@ -28,6 +28,26 @@ the last successful cache remains readable.
 Yes, after at least one successful refresh. Opening linked articles still requires
 network connectivity.
 
+## How do Android alerts work?
+
+Tap **Alerts: off** inside the app and approve Android's notification prompt. A
+confirmation notification proves the channel is working. The app then checks in
+the background approximately every 30 minutes and alerts only for newly observed
+CISA-exploited or critical vulnerabilities. It does not notify for the historical
+items already present when alerts are enabled.
+
+If the control says **Alerts: blocked**, tap it to open the app's Android
+notification settings. Manufacturer battery optimisation may delay background
+checks, so alerts are useful defensive awareness rather than a guaranteed
+emergency-warning service.
+
+## Why is the widget not identical to the open application?
+
+Android widgets use the restricted `RemoteViews` framework and cannot embed the
+app's RecyclerView. The widget therefore has its own Discover-style card layout,
+with images, severity, summary, source and age, plus a matching widget-picker
+preview. It remains scrollable when placed on the home screen.
+
 ## Does the app hide my IP from publishers?
 
 No. Direct fetching means each responding publisher can see the device's public

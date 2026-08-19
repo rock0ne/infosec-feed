@@ -1,14 +1,21 @@
 package uk.cybertecpro.infosecfeed
 
+import android.Manifest
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Toast
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -23,10 +30,26 @@ class MainActivity : AppCompatActivity() {
     private lateinit var status: TextView
     private lateinit var empty: View
     private lateinit var chips: LinearLayout
+    private lateinit var alerts: TextView
 
     /** null == "All". Filtering is client-side over the cached list. */
     private var activeCategory: String? = null
     private var allItems: List<FeedItem> = emptyList()
+
+    private val notificationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            enableAlerts()
+        } else {
+            Toast.makeText(
+                this,
+                "Notification permission was not granted. Tap Alerts again to retry.",
+                Toast.LENGTH_LONG,
+            ).show()
+            updateAlertControl()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +57,7 @@ class MainActivity : AppCompatActivity() {
 
         repo = FeedRepository(this)
         adapter = FeedAdapter(emptyList())
+        SecurityAlertManager.initialize(this)
 
         findViewById<RecyclerView>(R.id.list).apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
@@ -41,6 +65,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<TextView>(R.id.add_widget).setOnClickListener { requestPinWidget() }
+        alerts = findViewById(R.id.alerts)
+        alerts.setOnClickListener { toggleAlerts() }
+        updateAlertControl()
 
         chips = findViewById(R.id.chips)
         buildChips()
@@ -64,6 +91,11 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::alerts.isInitialized) updateAlertControl()
+    }
+
     private fun load(force: Boolean) {
         if (!force) return
         swipe.isRefreshing = true
@@ -75,6 +107,7 @@ class MainActivity : AppCompatActivity() {
                 applyFilter()
                 showStatus(visibleCount(), System.currentTimeMillis())
                 FeedWidgetProvider.refreshAll(this@MainActivity)
+                SecurityAlertManager.onFeedUpdated(this@MainActivity, items)
             } else if (adapter.itemCount == 0) {
                 status.text = "No items. Check connectivity and pull to retry."
                 empty.visibility = View.VISIBLE
@@ -94,6 +127,49 @@ class MainActivity : AppCompatActivity() {
         }
         val provider = ComponentName(this, FeedWidgetProvider::class.java)
         manager.requestPinAppWidget(provider, null, null)
+    }
+
+    private fun toggleAlerts() {
+        if (SecurityAlertManager.isEnabled(this)) {
+            if (!SecurityAlertManager.canPost(this)) {
+                startActivity(
+                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
+                )
+                return
+            }
+            SecurityAlertManager.disable(this)
+            Toast.makeText(this, R.string.alerts_disabled_message, Toast.LENGTH_SHORT).show()
+            updateAlertControl()
+            return
+        }
+
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            enableAlerts()
+        }
+    }
+
+    private fun enableAlerts() {
+        SecurityAlertManager.enable(this, allItems.ifEmpty { repo.cached() })
+        Toast.makeText(this, R.string.alerts_enabled_message, Toast.LENGTH_SHORT).show()
+        updateAlertControl()
+    }
+
+    private fun updateAlertControl() {
+        alerts.setText(
+            when {
+                SecurityAlertManager.isEnabled(this) && !SecurityAlertManager.canPost(this) ->
+                    R.string.alerts_blocked
+                SecurityAlertManager.isEnabled(this) -> R.string.alerts_on
+                else -> R.string.alerts_off
+            },
+        )
     }
 
     private fun buildChips() {

@@ -21,6 +21,9 @@ repository. Include the affected version, platform, reproduction steps and impac
   its feed roster is compiled into the app.
 - Public build automation never has access to the Android release-signing key or
   Apple distribution credentials.
+- Android security notifications are explicitly opt-in. The channel is created
+  locally and the app stores only a bounded set of previously seen feed IDs to
+  prevent duplicate or historical alert bursts.
 
 No system can guarantee that every external publisher remains trustworthy. Keep
 dependencies and platform versions current, and treat source-roster changes as
