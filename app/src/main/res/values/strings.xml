@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">InfoSec Feed</string>
+    <string name="widget_title">InfoSec Feed</string>
+    <string name="widget_description">High-signal vulnerability and security research feed.</string>
+    <string name="refresh">Refresh</string>
+    <string name="empty">No items yet. Open the app and pull to refresh.</string>
+    <string name="add_widget">+ Widget</string>
+    <string name="source_age">\u00b7  %1$s</string>
+</resources>

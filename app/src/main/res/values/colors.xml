@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#080D17</color>
+    <color name="surface">#111A2B</color>
+    <color name="surface_alt">#0D1421</color>
+    <color name="text">#E6EDF7</color>
+    <color name="text_dim">#8FA3BF</color>
+    <color name="accent">#4EA8FF</color>
+    <color name="exploited">#FF4D4D</color>
+    <color name="critical">#FF8A3D</color>
+    <color name="high">#FFC93D</color>
+    <color name="badge_text">#0A0F1A</color>
+</resources>

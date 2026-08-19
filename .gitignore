@@ -1,0 +1,19 @@
+# never commit signing material
+keystore.properties
+*.jks
+*.keystore
+
+# build output
+build/
+.gradle/
+local.properties
+*.apk
+
+# Apple/Xcode output
+.DS_Store
+DerivedData/
+*.xcarchive
+*.ipa
+ios/*.xcodeproj/
+ios/Config/*.plist
+**/xcuserdata/
