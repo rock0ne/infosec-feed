@@ -29,7 +29,8 @@ renders a bounded timeline snapshot controlled by the operating system. The
 full app provides the searchable, filterable 500-item feed; the widget shows
 the latest CISA Known Exploited Vulnerabilities in medium and large sizes.
 
-The repository's macOS GitHub Actions job generates the Xcode project and runs
-the iOS unit tests without code signing. App Store or TestFlight distribution
-still requires the repository owner to use an Apple Developer account and
-complete Apple's signing and review process.
+The repository's macOS GitHub Actions job runs the portable parser/ranking tests
+through Swift Package Manager, then compiles the complete app and widget against
+the generic iOS Simulator SDK without code signing. App Store or TestFlight
+distribution still requires the repository owner to use an Apple Developer
+account and complete Apple's signing and review process.

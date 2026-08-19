@@ -33,10 +33,12 @@ jobs:
         run: brew install xcodegen
       - name: Generate project
         run: xcodegen generate
-      - name: Build and test
+      - name: Test portable iOS core
+        run: swift test
+      - name: Build app and widget
         run: |
-          xcodebuild test \
+          xcodebuild build \
             -project InfoSecFeed.xcodeproj \
             -scheme InfoSecFeed \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
+            -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
