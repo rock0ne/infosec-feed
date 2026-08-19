@@ -1,6 +1,7 @@
 package uk.cybertecpro.infosecfeed
 
 import android.content.Context
+import android.text.Html
 import android.util.Xml
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -333,10 +334,11 @@ class FeedRepository(private val context: Context) {
                         if ((n == "item" || n == "entry") && inEntry) {
                             inEntry = false
                             if (title.isNotEmpty()) {
+                                val cleanTitle = stripHtml(title)
                                 out += FeedItem(
-                                    id = "rss:${src.name}:${link.ifEmpty { title }}",
-                                    title = title,
-                                    summary = desc.take(400),
+                                    id = "rss:${src.name}:${link.ifEmpty { cleanTitle }}",
+                                    title = cleanTitle,
+                                    summary = if (src.url.contains("reddit.com")) "" else desc.take(400),
                                     source = src.name,
                                     url = link,
                                     published = parseRssDate(date),
@@ -370,9 +372,7 @@ class FeedRepository(private val context: Context) {
     }
 
     private fun stripHtml(s: String): String =
-        s.replace(Regex("<[^>]*>"), " ")
-            .replace("&nbsp;", " ").replace("&amp;", "&")
-            .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"")
+        Html.fromHtml(s, Html.FROM_HTML_MODE_LEGACY).toString()
             .replace(Regex("\\s+"), " ").trim()
 
     private fun parseDate(value: String, pattern: String): Long = runCatching {

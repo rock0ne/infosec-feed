@@ -30,16 +30,23 @@ network connectivity.
 
 ## How do Android alerts work?
 
-Tap **Alerts: off** inside the app and approve Android's notification prompt. A
+Tap **Alerts: off** inside the app, select **CISA KEV only** (recommended) or
+**CISA KEV + critical CVEs**, and approve Android's notification prompt. A
 confirmation notification proves the channel is working. The app then checks in
-the background approximately every 30 minutes and alerts only for newly observed
-CISA-exploited or critical vulnerabilities. It does not notify for the historical
-items already present when alerts are enabled.
+the background approximately every 30 minutes. It does not notify for historical
+items already present when alerts are enabled or when the threshold is widened.
 
 If the control says **Alerts: blocked**, tap it to open the app's Android
 notification settings. Manufacturer battery optimisation may delay background
 checks, so alerts are useful defensive awareness rather than a guaranteed
 emergency-warning service.
+
+## Does Android search work offline?
+
+Yes. Search filters the bounded local cache by CVE ID, title, summary and source.
+It combines with category chips, so a learner can select **Vulnerabilities** and
+then search for `oracle` or a specific `CVE-...` identifier. Search text never
+leaves the device.
 
 ## Why is the widget not identical to the open application?
 

@@ -1,6 +1,7 @@
 package uk.cybertecpro.infosecfeed
 
 import android.Manifest
+import android.app.AlertDialog
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -12,10 +13,12 @@ import android.widget.Toast
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -28,19 +31,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: FeedAdapter
     private lateinit var swipe: SwipeRefreshLayout
     private lateinit var status: TextView
-    private lateinit var empty: View
+    private lateinit var empty: TextView
     private lateinit var chips: LinearLayout
     private lateinit var alerts: TextView
 
     /** null == "All". Filtering is client-side over the cached list. */
     private var activeCategory: String? = null
+    private var searchQuery: String = ""
     private var allItems: List<FeedItem> = emptyList()
+    private var pendingAlertMode: AlertMode = AlertMode.KEV_ONLY
 
     private val notificationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
         if (granted) {
-            enableAlerts()
+            enableAlerts(pendingAlertMode)
         } else {
             Toast.makeText(
                 this,
@@ -66,7 +71,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.add_widget).setOnClickListener { requestPinWidget() }
         alerts = findViewById(R.id.alerts)
-        alerts.setOnClickListener { toggleAlerts() }
+        alerts.setOnClickListener { showAlertOptions() }
         updateAlertControl()
 
         chips = findViewById(R.id.chips)
@@ -74,6 +79,11 @@ class MainActivity : AppCompatActivity() {
 
         status = findViewById(R.id.status)
         empty = findViewById(R.id.empty)
+        findViewById<EditText>(R.id.search).doAfterTextChanged {
+            searchQuery = it?.toString().orEmpty().trim()
+            applyFilter()
+            showStatus(visibleCount(), repo.lastUpdated())
+        }
         swipe = findViewById(R.id.swipe)
         swipe.setOnRefreshListener { load(force = true) }
 
@@ -129,21 +139,39 @@ class MainActivity : AppCompatActivity() {
         manager.requestPinAppWidget(provider, null, null)
     }
 
-    private fun toggleAlerts() {
-        if (SecurityAlertManager.isEnabled(this)) {
-            if (!SecurityAlertManager.canPost(this)) {
-                startActivity(
-                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
-                )
-                return
+    private fun showAlertOptions() {
+        if (SecurityAlertManager.isEnabled(this) && !SecurityAlertManager.canPost(this)) {
+            startActivity(
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
+            )
+            return
+        }
+        val modes = arrayOf(AlertMode.OFF, AlertMode.KEV_ONLY, AlertMode.KEV_AND_CRITICAL)
+        val labels = arrayOf(
+            getString(R.string.alert_option_off),
+            getString(R.string.alert_option_kev),
+            getString(R.string.alert_option_critical),
+        )
+        val selected = modes.indexOf(SecurityAlertManager.mode(this)).coerceAtLeast(0)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.alert_options_title)
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                dialog.dismiss()
+                configureAlerts(modes[which])
             }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun configureAlerts(mode: AlertMode) {
+        if (mode == AlertMode.OFF) {
             SecurityAlertManager.disable(this)
             Toast.makeText(this, R.string.alerts_disabled_message, Toast.LENGTH_SHORT).show()
             updateAlertControl()
             return
         }
-
+        pendingAlertMode = mode
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
@@ -151,12 +179,12 @@ class MainActivity : AppCompatActivity() {
         ) {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            enableAlerts()
+            enableAlerts(mode)
         }
     }
 
-    private fun enableAlerts() {
-        SecurityAlertManager.enable(this, allItems.ifEmpty { repo.cached() })
+    private fun enableAlerts(mode: AlertMode) {
+        SecurityAlertManager.enable(this, allItems.ifEmpty { repo.cached() }, mode)
         Toast.makeText(this, R.string.alerts_enabled_message, Toast.LENGTH_SHORT).show()
         updateAlertControl()
     }
@@ -166,7 +194,9 @@ class MainActivity : AppCompatActivity() {
             when {
                 SecurityAlertManager.isEnabled(this) && !SecurityAlertManager.canPost(this) ->
                     R.string.alerts_blocked
-                SecurityAlertManager.isEnabled(this) -> R.string.alerts_on
+                SecurityAlertManager.mode(this) == AlertMode.KEV_ONLY -> R.string.alerts_kev
+                SecurityAlertManager.mode(this) == AlertMode.KEV_AND_CRITICAL ->
+                    R.string.alerts_all_critical
                 else -> R.string.alerts_off
             },
         )
@@ -200,18 +230,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun visible(): List<FeedItem> =
-        activeCategory?.let { c -> allItems.filter { it.category == c } } ?: allItems
+    private fun visible(): List<FeedItem> {
+        return FeedFilter.apply(allItems, activeCategory, searchQuery)
+    }
 
     private fun visibleCount() = visible().size
 
     private fun applyFilter() {
-        adapter.submit(visible())
+        val visible = visible()
+        adapter.submit(visible)
+        if (::empty.isInitialized) {
+            empty.visibility = if (allItems.isNotEmpty() && visible.isEmpty()) View.VISIBLE else View.GONE
+            if (visible.isEmpty() && allItems.isNotEmpty()) {
+                empty.setText(R.string.no_search_results)
+            }
+        }
     }
 
     private fun showStatus(count: Int, updated: Long) {
         empty.visibility = View.GONE
         val scope = activeCategory ?: "all sources"
-        status.text = "$count items  ·  $scope  ·  updated ${Format.age(updated)}"
+        val label = if (searchQuery.isBlank()) "$count items" else "$count matches"
+        status.text = "$label  ·  $scope  ·  updated ${Format.age(updated)}"
     }
 }

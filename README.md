@@ -14,6 +14,7 @@ general headlines.
 - CISA Known Exploited Vulnerabilities, recent NVD CVEs and security repositories
 - Up to 500 deduplicated items cached for offline reading
 - Discover-style image and text cards with category filters and search on iOS
+- Instant offline Android search across CVE IDs, titles, summaries and sources
 - Discover-style, scrollable Android home-screen widget with a matching picker preview
 - Opt-in Android alerts for newly observed exploited and critical vulnerabilities
 - Bounded CISA KEV WidgetKit snapshot on iOS
@@ -34,13 +35,13 @@ snapshot.
 
 ## Install the Android release
 
-1. Download `InfoSec-Feed-1.2.0-release.apk` from the GitHub release.
+1. Download `InfoSec-Feed-1.3.0-release.apk` from the GitHub release.
 2. Enable **Developer options → USB debugging** on the phone.
 3. Connect the phone, accept its authorization prompt, then run:
 
 ```powershell
 adb devices
-adb install -r "InfoSec-Feed-1.2.0-release.apk"
+adb install -r "InfoSec-Feed-1.3.0-release.apk"
 ```
 
 The `-r` flag upgrades an existing installation without clearing its cached feed.
@@ -57,11 +58,16 @@ normal full-page widget avoids rooting, Knox changes and proprietary permissions
 
 ### Enable Android security alerts
 
-Open the app and tap **Alerts: off**, then allow notifications when Android asks.
+Open the app and tap **Alerts: off**, choose **CISA KEV only** or **CISA KEV +
+critical CVEs**, then allow notifications when Android asks.
 The app creates a dedicated **Critical security alerts** channel and checks in the
 background every 30 minutes while alerts are enabled. Enabling alerts records the
 current cache as already seen, so it does not dump historical CVEs into the
-notification shade. Only newly observed `EXPLOITED` and `CRITICAL` entries qualify.
+notification shade. KEV-only is the quieter default for existing v1.2 users.
+
+The search field filters the local cache immediately and combines with the active
+category chip. For example, select **Vulnerabilities** and search for a CVE ID,
+vendor, product or source. Search does not send queries to a server.
 
 Tap **Alerts: blocked** to open Android's notification settings if permission was
 later disabled. Android controls exact background timing and may defer checks for
