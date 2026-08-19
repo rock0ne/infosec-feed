@@ -35,7 +35,7 @@ jobs:
         run: xcodegen generate
       - name: Build and test
         run: |
-          DEVICE_ID=$(xcodebuild -project InfoSecFeed.xcodeproj -scheme InfoSecFeed -showdestinations \
+          DEVICE_ID=$(xcodebuild -project InfoSecFeed.xcodeproj -scheme InfoSecFeed -showdestinations 2>&1 \
             | perl -ne 'if (/platform:iOS Simulator.*id:([0-9A-Fa-f-]{36})/) { print $1; exit }')
           test -n "$DEVICE_ID"
           xcodebuild test \
