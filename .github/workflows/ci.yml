@@ -36,9 +36,9 @@ jobs:
       - name: Build and test
         run: |
           DEVICE_ID=$(xcodebuild -project InfoSecFeed.xcodeproj -scheme InfoSecFeed -showdestinations \
-            | sed -n 's/.*platform:iOS Simulator.*id:\([^,}]*\).*/\1/p' \
+            | grep -Eo 'id:[0-9A-Fa-f-]{36}' \
             | head -1 \
-            | xargs)
+            | cut -d: -f2)
           test -n "$DEVICE_ID"
           xcodebuild test \
             -project InfoSecFeed.xcodeproj \
