@@ -4,7 +4,11 @@ using InfoSecFeed.Windows.Models;
 
 namespace InfoSecFeed.Windows.Services;
 
-public sealed record UserSettings(AlertMode AlertMode = AlertMode.Off, int RefreshMinutes = 30);
+public sealed record UserSettings(
+    AlertMode AlertMode = AlertMode.Off,
+    int RefreshMinutes = 30,
+    double TextScale = DisplayPreferences.DefaultTextScale,
+    bool OpenMaximized = false);
 
 public sealed class AppStorage
 {
@@ -30,8 +34,15 @@ public sealed class AppStorage
     public Task SaveFeedAsync(IReadOnlyList<FeedItem> items, CancellationToken cancellationToken = default) =>
         SaveAtomicAsync(FeedPath, items, cancellationToken);
 
-    public async Task<UserSettings> LoadSettingsAsync(CancellationToken cancellationToken = default) =>
-        await LoadAsync<UserSettings>(SettingsPath, cancellationToken) ?? new UserSettings();
+    public async Task<UserSettings> LoadSettingsAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await LoadAsync<UserSettings>(SettingsPath, cancellationToken) ?? new UserSettings();
+        return settings with
+        {
+            TextScale = DisplayPreferences.NormalizeTextScale(settings.TextScale),
+            RefreshMinutes = Math.Clamp(settings.RefreshMinutes, 5, 240),
+        };
+    }
 
     public Task SaveSettingsAsync(UserSettings settings, CancellationToken cancellationToken = default) =>
         SaveAtomicAsync(SettingsPath, settings, cancellationToken);
