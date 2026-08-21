@@ -67,6 +67,28 @@ WidgetKit uses operating-system-controlled timeline snapshots rather than
 Android's collection-widget model. The iOS widget therefore shows a bounded CISA
 KEV view while the full application contains the complete feed.
 
+## How do Windows alerts and background refresh work?
+
+Windows alerts are off by default. Choose **CISA KEV only** or **KEV + critical
+CVEs** in the app. Closing or minimising the window leaves InfoSec Feed in the
+notification area, where it refreshes every 30 minutes and raises a local alert
+only for newly observed matching items. Choose **Exit** from the tray menu to
+stop background refresh. No cloud notification service or account is involved.
+
+## Why is there no Windows 11 widget in the first release?
+
+Windows widgets are constrained cards backed by a packaged widget provider, not
+arbitrary scrollable application windows. The first Windows release concentrates
+on the complete feed, offline behaviour and alerts. A future signed/MSIX release
+can add a bounded KEV/critical snapshot after its package lifecycle is tested.
+
+## Why might Windows SmartScreen warn about the GitHub build?
+
+The community build is self-contained but not Authenticode signed. Public code
+signing requires a protected certificate and an established release process.
+Build from source if you need to verify it immediately; a production installer
+should be signed or distributed through the Microsoft Store.
+
 ## Can I install the iOS app directly from GitHub?
 
 Source code can be downloaded from GitHub, but Apple requires an app to be signed
@@ -80,6 +102,7 @@ Update both platform rosters:
 
 - Android: `app/src/main/java/uk/cybertecpro/infosecfeed/Sources.kt`
 - iOS: `ios/InfoSecFeed/Sources.swift`
+- Windows: `windows/InfoSecFeed.Windows/Services/SourceCatalog.cs`
 
 Please test the URL, content type, dates, redirects and rate-limit behaviour before
 submitting a pull request.

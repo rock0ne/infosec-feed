@@ -17,3 +17,10 @@ DerivedData/
 ios/*.xcodeproj/
 ios/Config/*.plist
 **/xcuserdata/
+
+# Windows/.NET output and local publish signing
+bin/
+obj/
+*.pfx
+*.snk
+windows/artifacts/

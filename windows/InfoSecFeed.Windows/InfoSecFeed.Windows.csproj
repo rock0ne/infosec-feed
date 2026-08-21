@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>InfoSecFeed</AssemblyName>
+    <RootNamespace>InfoSecFeed.Windows</RootNamespace>
+    <ApplicationIcon>Assets\InfoSecFeed.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>1.0.0</Version>
+    <Authors>CyberTecPro community</Authors>
+    <Product>InfoSec Feed for Windows</Product>
+    <Description>A private, security-only intelligence reader.</Description>
+  </PropertyGroup>
+</Project>

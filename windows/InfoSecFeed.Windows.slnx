@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="InfoSecFeed.Windows/InfoSecFeed.Windows.csproj" />
+  <Project Path="InfoSecFeed.Windows.Tests/InfoSecFeed.Windows.Tests.csproj" />
+</Solution>

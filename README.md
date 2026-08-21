@@ -1,6 +1,6 @@
 # InfoSec Feed
 
-An open-source, security-only intelligence reader for Android and iOS. It keeps
+An open-source, security-only intelligence reader for Android, iOS and Windows. It keeps
 the useful visual rhythm of a modern discovery feed while removing engagement
 ranking, advertising, tracking, and unrelated news.
 
@@ -13,11 +13,12 @@ general headlines.
 - 50+ government, vulnerability, threat-intelligence, research and community sources
 - CISA Known Exploited Vulnerabilities, recent NVD CVEs and security repositories
 - Up to 500 deduplicated items cached for offline reading
-- Discover-style image and text cards with category filters and search on iOS
+- Discover-style image and text cards with category filters and search
 - Instant offline Android search across CVE IDs, titles, summaries and sources
 - Discover-style, scrollable Android home-screen widget with a matching picker preview
 - Opt-in Android alerts for newly observed exploited and critical vulnerabilities
 - Bounded CISA KEV WidgetKit snapshot on iOS
+- Native Windows app with offline cache, tray refresh and opt-in desktop alerts
 - No account, advertising SDK, analytics SDK or behavioural ranking
 - HTTPS-only application traffic and bounded image downloads
 
@@ -27,6 +28,7 @@ general headlines.
 |---|---|---:|---|
 | Android | Device-tested on Galaxy S21+ / Android 15 | Android 8 (API 26) | Scrollable, resizable feed widget |
 | iOS | Native SwiftUI source with macOS CI | iOS 17 | Medium/large CISA KEV timeline widget |
+| Windows | Native WPF client with Windows CI | Windows 10/11 x64 | Tray companion; high-signal widget is deferred |
 
 iOS intentionally differs from Android: Apple controls WidgetKit refresh timing
 and does not expose Android's scrollable collection-widget model. The iOS app
@@ -99,6 +101,23 @@ open InfoSecFeed.xcodeproj
 Select your Apple development team in Xcode before installing on an iPhone.
 See [ios/README.md](ios/README.md) for signing and WidgetKit details.
 
+## Build Windows
+
+Requirements: Windows 10 or 11 and the .NET 10 SDK.
+
+```powershell
+dotnet test ".\windows\InfoSecFeed.Windows.Tests\InfoSecFeed.Windows.Tests.csproj" -c Release
+dotnet publish ".\windows\InfoSecFeed.Windows\InfoSecFeed.Windows.csproj" `
+  -c Release -r win-x64 --self-contained true `
+  -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false `
+  -o ".\windows\artifacts\win-x64"
+```
+
+Run `windows\artifacts\win-x64\InfoSecFeed.exe`. Keep all files in that output
+directory together. The Windows client remains in the notification area after
+its window closes so it can refresh every 30 minutes; choose **Exit** from its
+tray menu to stop it. See [windows/README.md](windows/README.md).
+
 ## Source categories
 
 - **Alerts:** CISA, NCSC UK, MSRC, ZDI, JPCERT
@@ -108,8 +127,9 @@ See [ios/README.md](ios/README.md) for signing and WidgetKit details.
 - **Research:** Project Zero, PortSwigger, watchTowr, Trail of Bits, Wiz and others
 - **Community:** SANS ISC, selected security subreddits, GitHub security repositories
 
-Sources can fail independently without breaking the feed. Edit Android's
-`Sources.kt` and iOS's `Sources.swift` when proposing roster changes.
+Sources can fail independently without breaking the feed. Keep Android's
+`Sources.kt`, iOS's `Sources.swift` and Windows' `SourceCatalog.cs` aligned when
+proposing roster changes.
 
 ## Security and privacy
 
@@ -118,6 +138,8 @@ Sources can fail independently without breaking the feed. Edit Android's
 - Feed images are size-bounded, downsampled and cached with a fixed disk budget.
 - Android manual widget refresh uses a non-exported receiver.
 - Android notifications are off by default and require runtime permission.
+- Windows alerts are off by default and use the local notification area; no cloud push service is contacted.
+- Windows XML parsing prohibits DTDs and external entities, and document/image downloads are size-bounded.
 - No personal data is collected by this project.
 - Publishers receive the device IP address because feeds are fetched directly.
 
@@ -129,6 +151,7 @@ for reporting and threat-boundary details.
 
 - [Frequently asked questions](docs/FAQ.md)
 - [iOS build and platform differences](ios/README.md)
+- [Windows build and platform differences](windows/README.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 
