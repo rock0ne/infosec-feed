@@ -1,6 +1,7 @@
 <Application x:Class="InfoSecFeed.Windows.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              StartupUri="MainWindow.xaml"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
@@ -15,11 +16,26 @@
         <SolidColorBrush x:Key="DangerBrush" Color="#FF6B7A" />
         <SolidColorBrush x:Key="WarningBrush" Color="#FFBC66" />
 
+        <!-- Accessible default is 115%; MainWindow updates these dynamic values. -->
+        <sys:Double x:Key="TextXs">11.5</sys:Double>
+        <sys:Double x:Key="TextSmall">13.8</sys:Double>
+        <sys:Double x:Key="TextBody">15</sys:Double>
+        <sys:Double x:Key="TextControl">16.1</sys:Double>
+        <sys:Double x:Key="TextTitle">20.7</sys:Double>
+        <sys:Double x:Key="TextHero">28.8</sys:Double>
+        <sys:Double x:Key="TitleMaxHeight">59.8</sys:Double>
+        <sys:Double x:Key="SummaryMaxHeight">64.4</sys:Double>
+        <sys:Double x:Key="CardImageWidth">250</sys:Double>
+        <sys:Double x:Key="CardImageHeight">155</sys:Double>
+        <sys:Double x:Key="CardMaxWidth">1800</sys:Double>
+        <Thickness x:Key="CardContentMargin">20,16</Thickness>
+
         <Style TargetType="Button">
             <Setter Property="Background" Value="#243445" />
             <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="16,9" />
+            <Setter Property="FontSize" Value="{DynamicResource TextControl}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -46,11 +62,13 @@
             <Setter Property="BorderBrush" Value="#34485C" />
             <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
             <Setter Property="Padding" Value="12,9" />
+            <Setter Property="FontSize" Value="{DynamicResource TextControl}" />
         </Style>
         <Style TargetType="ComboBox">
             <Setter Property="Background" Value="#1A2734" />
             <Setter Property="Foreground" Value="#121820" />
             <Setter Property="Padding" Value="10,7" />
+            <Setter Property="FontSize" Value="{DynamicResource TextControl}" />
         </Style>
     </Application.Resources>
 </Application>

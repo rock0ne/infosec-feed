@@ -116,6 +116,23 @@ public sealed class FeedContractTests
     public void Public_addresses_are_allowed(string value) =>
         Assert.True(NetworkGuard.IsPublicAddress(IPAddress.Parse(value)));
 
+    [Theory]
+    [InlineData(0, DisplayPreferences.DefaultTextScale)]
+    [InlineData(double.NaN, DisplayPreferences.DefaultTextScale)]
+    [InlineData(0.7, DisplayPreferences.MinimumTextScale)]
+    [InlineData(2.0, DisplayPreferences.MaximumTextScale)]
+    [InlineData(1.3, 1.3)]
+    public void Text_scale_is_migrated_and_bounded(double requested, double expected) =>
+        Assert.Equal(expected, DisplayPreferences.NormalizeTextScale(requested));
+
+    [Fact]
+    public void Text_scale_steps_and_label_are_stable()
+    {
+        Assert.Equal(1.25, DisplayPreferences.Increase(DisplayPreferences.DefaultTextScale));
+        Assert.Equal(1.05, DisplayPreferences.Decrease(DisplayPreferences.DefaultTextScale));
+        Assert.Equal("115%", DisplayPreferences.Percentage(DisplayPreferences.DefaultTextScale));
+    }
+
     private static FeedItem Item(
         string id,
         DateTimeOffset? published,

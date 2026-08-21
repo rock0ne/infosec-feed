@@ -7,7 +7,8 @@
         Title="InfoSec Feed" Width="1180" Height="820" MinWidth="760" MinHeight="540"
         Background="{StaticResource WindowBrush}"
         Foreground="{StaticResource PrimaryTextBrush}"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        PreviewKeyDown="OnPreviewKeyDown">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -16,31 +17,37 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="#0D141D" BorderBrush="#263543" BorderThickness="0,0,0,1" Padding="24,18">
+        <Border x:Name="HeaderBorder" Grid.Row="0" Background="#0D141D" BorderBrush="#263543"
+                BorderThickness="0,0,0,1" Padding="24,18">
             <DockPanel LastChildFill="True">
-                <StackPanel DockPanel.Dock="Left">
-                    <TextBlock Text="INFOSEC FEED" Foreground="{StaticResource AccentBrush}"
-                               FontSize="13" FontWeight="SemiBold" />
-                    <TextBlock Text="Security intelligence without the noise"
-                               FontSize="25" FontWeight="SemiBold" Margin="0,4,0,0" />
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="FullDesktopButton" Content="Full desktop" Click="ToggleDesktopMode_Click"
+                            ToolTip="Maximise or restore the reading workspace (F11)" Margin="0,0,10,0" />
+                    <Button Content="Refresh" Command="{Binding RefreshCommand}" />
                 </StackPanel>
-                <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding RefreshCommand}"
-                        VerticalAlignment="Center" HorizontalAlignment="Right" />
+                <StackPanel>
+                    <TextBlock Text="INFOSEC FEED" Foreground="{StaticResource AccentBrush}"
+                               FontSize="{DynamicResource TextSmall}" FontWeight="SemiBold" />
+                    <TextBlock Text="Security intelligence without the noise"
+                               FontSize="{DynamicResource TextHero}" FontWeight="SemiBold" Margin="0,4,0,0"
+                               TextWrapping="Wrap" />
+                </StackPanel>
             </DockPanel>
         </Border>
 
-        <Border Grid.Row="1" Padding="24,14" Background="{StaticResource PanelBrush}">
+        <Border x:Name="FilterBorder" Grid.Row="1" Padding="24,14" Background="{StaticResource PanelBrush}">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="190" />
-                    <ColumnDefinition Width="200" />
-                </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0" Margin="0,0,12,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
                     <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             ToolTip="Search titles, summaries, sources and severities" FontSize="15" />
+                             ToolTip="Search titles, summaries, sources and severities"
+                             AutomationProperties.Name="Search security intelligence" />
                     <TextBlock Text="Search CVEs, threats, sources…" Margin="13,0" VerticalAlignment="Center"
-                               Foreground="#8092A5" IsHitTestVisible="False">
+                               Foreground="#8092A5" IsHitTestVisible="False"
+                               FontSize="{DynamicResource TextControl}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -53,17 +60,44 @@
                         </TextBlock.Style>
                     </TextBlock>
                 </Grid>
-                <ComboBox Grid.Column="1" ItemsSource="{Binding Categories}"
-                          SelectedItem="{Binding SelectedCategory}" Margin="0,0,12,0" />
-                <StackPanel Grid.Column="2">
-                    <TextBlock Text="Desktop alerts" Foreground="{StaticResource SecondaryTextBrush}" FontSize="11" />
-                    <ComboBox ItemsSource="{Binding AlertChoices}" DisplayMemberPath="Label"
-                              SelectedValuePath="Mode" SelectedValue="{Binding SelectedAlertMode}" />
-                </StackPanel>
+                <WrapPanel Grid.Row="1" Margin="0,12,0,0">
+                    <StackPanel Width="190" Margin="0,0,14,0">
+                        <TextBlock Text="Category" Foreground="{StaticResource SecondaryTextBrush}"
+                                   FontSize="{DynamicResource TextSmall}" Margin="0,0,0,3" />
+                        <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"
+                                  AutomationProperties.Name="Feed category" />
+                    </StackPanel>
+                    <StackPanel Width="230" Margin="0,0,14,0">
+                        <TextBlock Text="Desktop alerts" Foreground="{StaticResource SecondaryTextBrush}"
+                                   FontSize="{DynamicResource TextSmall}" Margin="0,0,0,3" />
+                        <ComboBox ItemsSource="{Binding AlertChoices}" DisplayMemberPath="Label"
+                                  SelectedValuePath="Mode" SelectedValue="{Binding SelectedAlertMode}"
+                                  AutomationProperties.Name="Desktop alert threshold" />
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="Text size" Foreground="{StaticResource SecondaryTextBrush}"
+                                   FontSize="{DynamicResource TextSmall}" Margin="0,0,0,3" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="A−" Command="{Binding DecreaseTextCommand}" Padding="11,7"
+                                    ToolTip="Make text smaller (Ctrl+-)" AutomationProperties.Name="Decrease text size" />
+                            <Slider Width="165" Minimum="0.9" Maximum="1.6" TickFrequency="0.1"
+                                    SmallChange="0.1" LargeChange="0.1" IsSnapToTickEnabled="True"
+                                    Value="{Binding TextScale, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Margin="10,0" VerticalAlignment="Center"
+                                    AutomationProperties.Name="Text size" />
+                            <Button Content="A+" Command="{Binding IncreaseTextCommand}" Padding="11,7"
+                                    ToolTip="Make text larger (Ctrl++)" AutomationProperties.Name="Increase text size" />
+                            <TextBlock Text="{Binding TextScaleLabel}" Width="52" TextAlignment="Center"
+                                       VerticalAlignment="Center" FontSize="{DynamicResource TextSmall}" />
+                            <Button Content="Reset" Command="{Binding ResetTextCommand}" Padding="11,7"
+                                    ToolTip="Reset text size (Ctrl+0)" />
+                        </StackPanel>
+                    </StackPanel>
+                </WrapPanel>
             </Grid>
         </Border>
 
-        <ListBox Grid.Row="2" ItemsSource="{Binding Items}" Background="Transparent" BorderThickness="0"
+        <ListBox x:Name="CardsList" Grid.Row="2" ItemsSource="{Binding Items}" Background="Transparent" BorderThickness="0"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  ScrollViewer.CanContentScroll="True"
                  VirtualizingPanel.IsVirtualizing="True"
@@ -82,9 +116,10 @@
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Border Background="{StaticResource CardBrush}" CornerRadius="14" Margin="4,5" Padding="0"
-                            BorderBrush="#263747" BorderThickness="1">
+                            BorderBrush="#263747" BorderThickness="1" MaxWidth="{DynamicResource CardMaxWidth}">
                         <DockPanel LastChildFill="True">
-                            <Border DockPanel.Dock="Left" Width="250" Height="155" Margin="0"
+                            <Border DockPanel.Dock="Left" Width="{DynamicResource CardImageWidth}"
+                                    Height="{DynamicResource CardImageHeight}" Margin="0"
                                     CornerRadius="14,0,0,14" ClipToBounds="True">
                                 <Border.Style>
                                     <Style TargetType="Border">
@@ -98,7 +133,7 @@
                                 </Border.Style>
                                 <Image Source="{Binding Image}" Stretch="UniformToFill" />
                             </Border>
-                            <Grid Margin="20,16">
+                            <Grid Margin="{DynamicResource CardContentMargin}">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
@@ -107,7 +142,7 @@
                                 </Grid.RowDefinitions>
                                 <StackPanel Grid.Row="0" Orientation="Horizontal">
                                     <TextBlock Text="{Binding Category}" Foreground="{StaticResource AccentBrush}"
-                                               FontSize="11" FontWeight="SemiBold" />
+                                               FontSize="{DynamicResource TextSmall}" FontWeight="SemiBold" />
                                     <Border Margin="10,0,0,0" Padding="7,2" CornerRadius="8">
                                         <Border.Style>
                                             <Style TargetType="Border">
@@ -123,20 +158,26 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
-                                        <TextBlock Text="{Binding Severity}" Foreground="#0B1016" FontSize="10" FontWeight="Bold" />
+                                        <TextBlock Text="{Binding Severity}" Foreground="#0B1016"
+                                                   FontSize="{DynamicResource TextXs}" FontWeight="Bold" />
                                     </Border>
                                 </StackPanel>
-                                <TextBlock Grid.Row="1" Text="{Binding Title}" TextWrapping="Wrap" FontSize="18"
+                                <TextBlock Grid.Row="1" Text="{Binding Title}" TextWrapping="Wrap"
+                                           FontSize="{DynamicResource TextTitle}"
                                            Foreground="{StaticResource PrimaryTextBrush}"
-                                           FontWeight="SemiBold" Margin="0,7,0,4" MaxHeight="52" />
+                                           FontWeight="SemiBold" Margin="0,7,0,4"
+                                           MaxHeight="{DynamicResource TitleMaxHeight}" />
                                 <TextBlock Grid.Row="2" Text="{Binding Summary}" TextWrapping="Wrap"
-                                           Foreground="{StaticResource SecondaryTextBrush}" FontSize="13" MaxHeight="42" />
+                                           Foreground="{StaticResource SecondaryTextBrush}"
+                                           FontSize="{DynamicResource TextBody}"
+                                           MaxHeight="{DynamicResource SummaryMaxHeight}" />
                                 <DockPanel Grid.Row="3" Margin="0,9,0,0" LastChildFill="False">
-                                    <TextBlock DockPanel.Dock="Left" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12">
+                                    <TextBlock DockPanel.Dock="Left" Foreground="{StaticResource SecondaryTextBrush}"
+                                               FontSize="{DynamicResource TextSmall}">
                                         <Run Text="{Binding Source, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding Age, Mode=OneWay}" />
                                     </TextBlock>
                                     <Button DockPanel.Dock="Right" Content="Open article" Command="{Binding OpenCommand}"
-                                            Padding="12,6" FontSize="12" />
+                                            Padding="12,6" FontSize="{DynamicResource TextSmall}" />
                                 </DockPanel>
                             </Grid>
                         </DockPanel>
@@ -149,7 +190,8 @@
             <DockPanel>
                 <ProgressBar DockPanel.Dock="Right" Width="120" Height="4" IsIndeterminate="True"
                              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <TextBlock Text="{Binding Status}" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12" />
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource SecondaryTextBrush}"
+                           FontSize="{DynamicResource TextSmall}" />
             </DockPanel>
         </Border>
     </Grid>

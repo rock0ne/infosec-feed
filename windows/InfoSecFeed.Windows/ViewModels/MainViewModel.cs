@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using InfoSecFeed.Windows.Models;
 using InfoSecFeed.Windows.Services;
 
@@ -9,17 +10,23 @@ public sealed class MainViewModel : BindableBase, IDisposable
     private readonly FeedService _feedService = new();
     private readonly ImageService _imageService = new();
     private readonly AppStorage _storage = new();
+    private readonly SemaphoreSlim _settingsWriteGate = new(1, 1);
     private readonly List<FeedItem> _allItems = [];
     private CancellationTokenSource? _imageCancellation;
+    private UserSettings _settings = new();
     private string _selectedCategory = Models.Categories.All;
     private string _searchText = "";
     private string _status = "Loading cached intelligence…";
     private bool _isBusy;
     private AlertMode _selectedAlertMode;
+    private double _textScale = DisplayPreferences.DefaultTextScale;
 
     public MainViewModel()
     {
         RefreshCommand = new RelayCommand(_ => _ = RefreshAsync(), _ => !IsBusy);
+        IncreaseTextCommand = new RelayCommand(_ => TextScale = DisplayPreferences.Increase(TextScale));
+        DecreaseTextCommand = new RelayCommand(_ => TextScale = DisplayPreferences.Decrease(TextScale));
+        ResetTextCommand = new RelayCommand(_ => TextScale = DisplayPreferences.DefaultTextScale);
     }
 
     public ObservableCollection<FeedCardViewModel> Items { get; } = [];
@@ -31,6 +38,9 @@ public sealed class MainViewModel : BindableBase, IDisposable
         new(AlertMode.KevAndCritical, "KEV + critical CVEs"),
     ];
     public RelayCommand RefreshCommand { get; }
+    public RelayCommand IncreaseTextCommand { get; }
+    public RelayCommand DecreaseTextCommand { get; }
+    public RelayCommand ResetTextCommand { get; }
 
     public string SelectedCategory
     {
@@ -60,6 +70,24 @@ public sealed class MainViewModel : BindableBase, IDisposable
         }
     }
 
+    public double TextScale
+    {
+        get => _textScale;
+        set
+        {
+            var normalized = DisplayPreferences.NormalizeTextScale(value);
+            if (!Set(ref _textScale, normalized)) return;
+            Raise(nameof(TextScaleLabel));
+            _settings = _settings with { TextScale = normalized };
+            TextScaleChanged?.Invoke(this, normalized);
+            _ = SaveSettingsAsync();
+        }
+    }
+
+    public string TextScaleLabel => DisplayPreferences.Percentage(TextScale);
+
+    public bool OpenMaximized => _settings.OpenMaximized;
+
     public string Status { get => _status; private set => Set(ref _status, value); }
 
     public bool IsBusy
@@ -72,12 +100,17 @@ public sealed class MainViewModel : BindableBase, IDisposable
     }
 
     public event EventHandler<IReadOnlyList<FeedItem>>? AlertsRaised;
+    public event EventHandler<double>? TextScaleChanged;
 
     public async Task InitializeAsync()
     {
-        var settings = await _storage.LoadSettingsAsync();
-        _selectedAlertMode = settings.AlertMode;
+        _settings = await _storage.LoadSettingsAsync();
+        _selectedAlertMode = _settings.AlertMode;
+        _textScale = _settings.TextScale;
         Raise(nameof(SelectedAlertMode));
+        Raise(nameof(TextScale));
+        Raise(nameof(TextScaleLabel));
+        TextScaleChanged?.Invoke(this, TextScale);
 
         var cached = await _storage.LoadFeedAsync();
         _allItems.AddRange(cached);
@@ -85,7 +118,15 @@ public sealed class MainViewModel : BindableBase, IDisposable
         Status = cached.Count == 0
             ? "No cache yet — fetching security intelligence…"
             : $"{cached.Count} cached items · refreshing in the background";
-        await RefreshAsync();
+        _ = RefreshAsync();
+    }
+
+    public void SetOpenMaximized(bool value)
+    {
+        if (_settings.OpenMaximized == value) return;
+        _settings = _settings with { OpenMaximized = value };
+        Raise(nameof(OpenMaximized));
+        _ = SaveSettingsAsync();
     }
 
     public async Task RefreshAsync()
@@ -150,8 +191,26 @@ public sealed class MainViewModel : BindableBase, IDisposable
     {
         // Seed the newly selected threshold from the current feed. Enabling or
         // widening alerts must never dump historical items into the tray.
-        await _storage.SaveSettingsAsync(new UserSettings(mode));
+        _settings = _settings with { AlertMode = mode };
+        await SaveSettingsAsync();
         await _storage.SaveSeenIdsAsync(AlertPolicy.AlertIds(_allItems, mode));
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        await _settingsWriteGate.WaitAsync();
+        try
+        {
+            await _storage.SaveSettingsAsync(_settings);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            Status = "Display preference could not be saved";
+        }
+        finally
+        {
+            _settingsWriteGate.Release();
+        }
     }
 
     private async Task LoadImagesAsync(IReadOnlyList<FeedCardViewModel> cards, CancellationToken cancellationToken)

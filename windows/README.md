@@ -13,11 +13,25 @@ offline cache and alerts that are off by default.
 - Ranking parity: KEV +72h, critical +18h, high +5h and GitHub activity -30h
 - Optional CISA KEV or KEV-plus-critical alerts
 - Thirty-minute refresh while the tray application is running
+- Persistent 90–160% text scaling with buttons, slider and keyboard shortcuts
+- Responsive full-desktop mode with wider imagery and readable maximum line length
 - HTTPS-only application requests, bounded documents/images and DTD-prohibited XML
 
 Closing or minimising the window keeps the client in the Windows notification
 area. Double-click the shield icon to reopen it; its menu also provides Refresh
 and Exit commands.
+
+## Display flexibility
+
+Use **Text size** in the filter panel to select 90–160%. The accessible default
+is 115%, and the choice persists between sessions. Keyboard equivalents are
+`Ctrl`+`+`, `Ctrl`+`-` and `Ctrl`+`0` to reset.
+
+Select **Full desktop**, press `F11`, or use the normal Windows maximise button.
+The application responds with larger card imagery, wider workspace padding and
+a bounded reading width instead of stretching long text across the whole monitor.
+Maximised/restored state is remembered when the tray application is reopened and
+between launches.
 
 ## Build and test
 

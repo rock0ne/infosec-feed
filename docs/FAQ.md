@@ -89,6 +89,14 @@ signing requires a protected certificate and an established release process.
 Build from source if you need to verify it immediately; a production installer
 should be signed or distributed through the Microsoft Store.
 
+## Can I enlarge the Windows text or use the whole desktop?
+
+Yes. The **Text size** control supports 90–160% and persists locally. Use
+`Ctrl`+`+`, `Ctrl`+`-` and `Ctrl`+`0` as shortcuts. **Full desktop**, `F11`, and
+the standard maximise button all use the responsive desktop layout: larger card
+imagery, roomier padding and a bounded reading width on wide monitors. The last
+maximised/restored choice is remembered.
+
 ## Can I install the iOS app directly from GitHub?
 
 Source code can be downloaded from GitHub, but Apple requires an app to be signed
